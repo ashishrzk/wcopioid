@@ -1,7 +1,10 @@
 #HEALTH INSURANCE CLAIM BLOCKCHAIN SOLUTION
 
-### Out of Network use case
+### Use Case 1 - Out of Network Claims
 
+* **Personas:** Insurance Payer
+* **Technology:** Oracle Blockchain Cloud Service, Oracle Health Insurance *(possibly)*
+* **Outline:**
 This demo will show how Oracle Blockchain Cloud Service can be used to increase a payer's visiblity into claims from out of network providers. We will take the example of a batch of claims from providers with which the payer has no managed care contract. These claims are be written to provider's blockchain network.
 
 The blockchain record ids for the claims are sent to a servicer that also has access to the blockchain, and that provider is given access to write information to these records. That servicer will then being their work on the claims, accessing them and updating them on the blockchain network.
