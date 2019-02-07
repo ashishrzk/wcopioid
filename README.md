@@ -8,7 +8,7 @@ The blockchain record ids for the claims are sent to a servicer that also has ac
 
 We'll show that, since the records remain on the blockchain network, the payer will always have the ability to check the records and see their current status. Once the servicer marks their work on the claims as complete, the payer will then initiate their payments.
 
-If possible, this demo would show a version of Oracle Health Insurance that we've customized writing and reading the data to the blockchain network. If that is not possible, then we will build a similar front end and API to read and write the records.
+If possible, this demo would show a version of Oracle Health Insurance that we've customized writing and reading the data to the blockchain network. If that is not possible, then we will build a similar front end and API to read and write the records from the blockchain network.
 
 
 ### IOT Traceability Use Case
