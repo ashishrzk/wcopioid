@@ -4,7 +4,8 @@
 
 * **Personas:** Insurance Payer
 * **Technology:** Oracle Blockchain Cloud Service, Oracle Health Insurance *(possibly)*
-* **Outline:**<br />
+* **Outline:**
+
 This demo will show how Oracle Blockchain Cloud Service can be used to increase a payer's visiblity into claims from out of network providers. We will take the example of a batch of claims from providers with which the payer has no managed care contract. On receiving the claims, the payer will write them to their blockchain network.
 
 The blockchain record ids for the claims are sent to a third-party servicer that also has access to the blockchain network, and that servicer is also given access to write information to these claim records. That servicer will then begin their work on the claims, accessing and updating them on the blockchain network.
