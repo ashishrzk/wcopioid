@@ -56,4 +56,59 @@ router.get(`/`, async (req, res) => {
   }
 });
 
+/* GET all statements from blockchain. */
+router.get(`/detail/:id`, async (req, res) => {
+
+  const getAllKeysOptions = {
+    method: `POST`,
+    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    json: true,
+    body: {
+      channel: `bankoforacleorderer`,
+      chaincode: `healthclaims`,
+      method: `queryBatchRecord`,
+      args: [req.params.id]
+    }
+  };
+
+  try {
+    let statementInfo = await rp(getAllKeysOptions);
+
+    if (statementInfo.returnCode !== `Success`) {
+      res.status(500).send(statementInfo);
+      return;
+    }
+
+    statementInfo = JSON.parse(statementInfo.result);
+    let diagnosisArr = [];
+    for (let i = 0; i < statementInfo.DiagnosisID.length; i++) {
+      const getDiagnosis = {
+        method: `POST`,
+        uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+        json: true,
+        body: {
+          channel: `bankoforacleorderer`,
+          chaincode: `healthclaims`,
+          method: `queryBatchRecord`,
+          args: [statementInfo.DiagnosisID[i]]
+        }
+      };
+      let answer = await rp(getDiagnosis);
+      if (answer.returnCode !== `Success`) {
+        res.status(500).send(answer);
+        return;
+      }
+      diagnosisArr.push(JSON.parse(answer.result));
+    }
+
+    statementInfo.DiagnosisID = diagnosisArr;
+    res.send(statementInfo);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+
+
+
 module.exports = router;
