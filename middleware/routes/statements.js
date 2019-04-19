@@ -23,6 +23,7 @@ router.get(`/`, async (req, res) => {
     let allKeys = await rp(getAllKeysOptions);
 
     if (allKeys.returnCode !== `Success`) {
+      allKeys.errorPlace = `Error fetching all keys`;
       res.status(500).send(allKeys);
       return;
     }
@@ -44,10 +45,35 @@ router.get(`/`, async (req, res) => {
         };
         let answer = await rp(getRecord);
         if (answer.returnCode !== `Success`) {
+          answer.errorPlace = `Error fetching the statement ${allKeys[i].Key}`;
           res.status(500).send(answer);
           return;
         }
-        replyArr.push(JSON.parse(answer.result));
+        answer = JSON.parse(answer.result)
+
+        let diagnosisArr = [];
+        for (let j = 0; j < answer.DiagnosisID.length; j++) {
+          const getDiagnosis = {
+            method: `POST`,
+            uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+            json: true,
+            body: {
+              channel: `bankoforacleorderer`,
+              chaincode: `healthclaims`,
+              method: `queryBatchRecord`,
+              args: [answer.DiagnosisID[j]]
+            }
+          };
+          let answer2 = await rp(getDiagnosis);
+          if (answer2.returnCode !== `Success`) {
+            answer2.errorPlace = `Error fetching diagnosis for ${answer.DiagnosisID[i]}`;
+            res.status(500).send(answer2);
+            return;
+          }
+          diagnosisArr.push(JSON.parse(answer2.result));
+        }
+        answer.diagnosisArr = diagnosisArr;
+        replyArr.push(answer);
       }
     }
     res.send(replyArr);
@@ -56,21 +82,69 @@ router.get(`/`, async (req, res) => {
   }
 });
 
-//// TODO: Make this work.
+//// Posting of new statements.
 router.post(`/`, async (req, res) => {
+  // Declaring the reply object, that will hold the reply data.
+  let replyObj = {};
+
+  // Making sure all elements are there.
+  if (!req.body.provider || !req.body.inNetwork || !req.body.patientName || !req.body.diagnosisIDs || !req.body.description || !req.body.currentPhase || !req.body.attachmentLink || !req.body.claimDate) {
+    replyObj.status = `Required element missing from body of request.`;
+    replyObj.provider = req.body.provider || `MISSING`;
+    replyObj.inNetwork = req.body.inNetwork || `MISSING`;
+    replyObj.patientName = req.body.patientName || `MISSING`;
+    replyObj.diagnosisIDs = req.body.diagnosisIDs || `MISSING`;
+    replyObj.description = req.body.description || `MISSING`;
+    replyObj.currentPhase = req.body.currentPhase || `MISSING`;
+    replyObj.attachmentLink = req.body.attachmentLink || `MISSING`;
+    replyObj.claimDate = req.body.claimDate || `MISSING`;
+    res.status(400).send(replyObj);
+    return;
+  }
+
   const statementID = `S${Math.floor(Math.random()*100000000)}`;
-  const provider = req.params.provider;
-  const inNetwork = req.params.inNetwork;
-  const patientName = req.params.patientName;
-  const diagnosisIDs = req.params.diagnosisIDs;
-  const description = req.params.description;
-  const currentPhase = req.params.currentPhase;
-  const attachmentLink = req.params.attachmentLink;
-  const action = req.params.action;
-  const claimDate = req.params.claimDate;
+  const provider = req.body.provider;
+  const inNetwork = req.body.inNetwork;
+  const patientName = req.body.patientName;
+  const diagnosisIDs = req.body.diagnosisIDs.join(`|`);
+  const description = req.body.description;
+  const currentPhase = req.body.currentPhase;
+  const attachmentLink = req.body.attachmentLink;
+  const action = `1`;
+  const claimDate = req.body.claimDate;
+
+  const postStatementOptions = {
+    method: `POST`,
+    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+    json: true,
+    body: {
+      channel: `bankoforacleorderer`,
+      chaincode: `healthclaims`,
+      method: `initStatement`,
+      args: [statementID, provider, inNetwork, patientName, diagnosisIDs, description, currentPhase, attachmentLink, action, claimDate]
+    }
+  };
+
+  try {
+    let result = await rp(postStatementOptions);
+    if (result.returnCode !== `Success`) {
+      replyObj.status = `Error writing data to blockchain.`;
+      replyObj.error = result;
+      res.status(500).send(replyObj);
+      return;
+    }
+    replyObj.statementID = statementID;
+    res.status(200).send(replyObj);
+  } catch (err) {
+    replyObj.status = `Error communicating with blockchain`;
+    replyObj.error = err;
+    res.status(500).send(replyObj);
+  }
+
 });
 
-/* GET all statements from blockchain. */
+
+/* GET a specific statment from blockchain. */
 router.get(`/detail/:id`, async (req, res) => {
 
   const getAllKeysOptions = {
@@ -121,8 +195,6 @@ router.get(`/detail/:id`, async (req, res) => {
     res.status(500).send(err);
   }
 });
-
-
 
 
 module.exports = router;
