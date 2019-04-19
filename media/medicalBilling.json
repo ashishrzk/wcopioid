@@ -1,0 +1,107 @@
+{
+    "statements":[
+        {
+            "inquiryID": "423-3242",
+            "Provider": "Pathology group",
+            "NetworkInOut" : "OUT", 
+            "PatientName": "Adam Jones",
+            "Date": "4/3/2019",
+            "PayerName": "Get Well Insurance",
+            "diagnosis":[{
+                "CPT": "88305",
+                "CPTName": "Pathology Analysis",
+                "ICD9": "787.1",
+                "Description": "Heartburn",
+                "Charge": "340.00",
+                "PatientAmount": "140.00",
+                "BilledtoInsurance": "200.00"
+            },
+                {
+                "CPT": "87140", 
+                "CPTName": "Aerobic Bacteria testing",  
+                "ICD9": "473.0", 
+                "Description": "Sinusitis",
+                "Charge": "70.00",
+                "PatientAmount": "25.00",
+                "BilledtoInsurance": "45.00"
+            }],
+            "currentPhase": "Ready to Claim"
+        },
+        {
+            "inquiryID": "423-3242",
+            "Provider": "Pathology group",
+            "NetworkInOut" : "OUT", 
+            "PatientName": "Adam Jones",
+            "Date": "4/3/2019",
+            "PayerName": "We Charge You Insurance",
+            "diagnosis":[{
+                "CPT": "88305",
+                "CPTName": "Pathology Analysis",
+                "ICD9": "787.1",
+                "Description": "Heartburn",
+                "Charge": "340.00",
+                "PatientAmount": "140.00",
+                "BilledtoInsurance": "200.00"
+            }],
+            "Description": "Happy Insurance, Happy doctors",
+            "currentPhase": "Claimed"
+        },
+        {
+            "inquiryID": "423-3242",
+            "Provider": "Pathology group",
+            "NetworkInOut" : "OUT", 
+            "PatientName": "Bradley Jacobs",
+            "Date": "4/5/2019",
+            "PayerName": "Aspira Insurance",
+            "diagnosis":[{
+                "CPT": "87140", 
+                "CPTName": "Aerobic Bacteria testing",  
+                "ICD9": "473.0", 
+                "Description": "Sinusitis",
+                "Charge": "70.00",
+                "PatientAmount": "0.0",
+                "BilledtoInsurance": "0.0"
+            }],
+            "Description": "Claims Serviced, Batched, and Received by Payer",
+            "currentPhase": "Claimed"
+        },
+        {
+            "inquiryID": "423-4456",
+            "Provider": "Pathology group",
+            "NetworkInOut" : "IN", 
+            "PatientName": "Liam Henry",
+            "Date": "4/11/2019",
+            "PayerName": "Aspira Insurance",
+            "diagnosis":[{
+                "CPT": "83525", 
+                "CPTName": "Insulin",  
+                "ICD9": "250.1", 
+                "Description": "Diabetes",
+                "Charge": "70.00",
+                "PatientAmount": "30.0",
+                "BilledtoInsurance": "40.0"
+            }],
+            "Description": "Claims Serviced, Batched, and Received by Payer",
+            "currentPhase": "Claimed"
+        },
+        {
+            "inquiryID": "423-4489",
+            "Provider": "Pathology group",
+            "NetworkInOut" : "OUT", 
+            "PatientName": "Manuel Sanchez",
+            "Date": "4/14/2019",
+            "PayerName": "Aspira Insurance",
+            "diagnosis":[{
+                "CPT": "95250", 
+                "CPTName": "Insulin Pump",  
+                "ICD9": "250.3", 
+                "Description": "Diabetes with other coma",
+                "Charge": "160.00",
+                "PatientAmount": "0.0",
+                "BilledtoInsurance": "00.0"
+            }],
+            "Description": "THird Party",
+            "currentPhase": "Claimed"
+        }
+    ]
+}
