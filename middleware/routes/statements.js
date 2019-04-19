@@ -88,7 +88,7 @@ router.post(`/`, async (req, res) => {
   let replyObj = {};
 
   // Making sure all elements are there.
-  if (!req.body.provider || !req.body.inNetwork || !req.body.patientName || !req.body.diagnosisIDs || !req.body.description || !req.body.currentPhase || !req.body.attachmentLink || !req.body.claimDate) {
+  if (!req.body.provider || !req.body.inNetwork || !req.body.patientName || !req.body.diagnosisIDs || !req.body.description || !req.body.currentPhase || !req.body.attachmentLink || !req.body.claimDate || !req.body.payerName) {
     replyObj.status = `Required element missing from body of request.`;
     replyObj.provider = req.body.provider || `======MISSING======`;
     replyObj.inNetwork = req.body.inNetwork || `======MISSING======`;
@@ -98,6 +98,7 @@ router.post(`/`, async (req, res) => {
     replyObj.currentPhase = req.body.currentPhase || `======MISSING======`;
     replyObj.attachmentLink = req.body.attachmentLink || `======MISSING======`;
     replyObj.claimDate = req.body.claimDate || `======MISSING======`;
+    replyObj.payerName = req.body.payerName || `======MISSING======`;
     res.status(400).send(replyObj);
     return;
   }
@@ -120,6 +121,7 @@ router.post(`/`, async (req, res) => {
   const attachmentLink = req.body.attachmentLink;
   const action = `0`;
   const claimDate = req.body.claimDate;
+  const payerName = req.body.payerName;
 
   const postStatementOptions = {
     method: `POST`,
@@ -129,7 +131,7 @@ router.post(`/`, async (req, res) => {
       channel: `bankoforacleorderer`,
       chaincode: `healthclaims`,
       method: `initStatement`,
-      args: [statementID, provider, inNetwork, patientName, diagnosisIDs, description, currentPhase, attachmentLink, action, claimDate]
+      args: [statementID, provider, inNetwork, patientName, diagnosisIDs, description, currentPhase, attachmentLink, action, claimDate, payerName]
     }
   };
 
