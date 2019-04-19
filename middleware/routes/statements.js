@@ -56,6 +56,20 @@ router.get(`/`, async (req, res) => {
   }
 });
 
+//// TODO: Make this work.
+router.post(`/`, async (req, res) => {
+  const statementID = `S${Math.floor(Math.random()*100000000)}`;
+  const provider = req.params.provider;
+  const inNetwork = req.params.inNetwork;
+  const patientName = req.params.patientName;
+  const diagnosisIDs = req.params.diagnosisIDs;
+  const description = req.params.description;
+  const currentPhase = req.params.currentPhase;
+  const attachmentLink = req.params.attachmentLink;
+  const action = req.params.action;
+  const claimDate = req.params.claimDate;
+});
+
 /* GET all statements from blockchain. */
 router.get(`/detail/:id`, async (req, res) => {
 
