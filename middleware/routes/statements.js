@@ -90,14 +90,14 @@ router.post(`/`, async (req, res) => {
   // Making sure all elements are there.
   if (!req.body.provider || !req.body.inNetwork || !req.body.patientName || !req.body.diagnosisIDs || !req.body.description || !req.body.currentPhase || !req.body.attachmentLink || !req.body.claimDate) {
     replyObj.status = `Required element missing from body of request.`;
-    replyObj.provider = req.body.provider || `MISSING`;
-    replyObj.inNetwork = req.body.inNetwork || `MISSING`;
-    replyObj.patientName = req.body.patientName || `MISSING`;
-    replyObj.diagnosisIDs = req.body.diagnosisIDs || `MISSING`;
-    replyObj.description = req.body.description || `MISSING`;
-    replyObj.currentPhase = req.body.currentPhase || `MISSING`;
-    replyObj.attachmentLink = req.body.attachmentLink || `MISSING`;
-    replyObj.claimDate = req.body.claimDate || `MISSING`;
+    replyObj.provider = req.body.provider || `======MISSING======`;
+    replyObj.inNetwork = req.body.inNetwork || `======MISSING======`;
+    replyObj.patientName = req.body.patientName || `======MISSING======`;
+    replyObj.diagnosisIDs = req.body.diagnosisIDs || `======MISSING======`;
+    replyObj.description = req.body.description || `======MISSING======`;
+    replyObj.currentPhase = req.body.currentPhase || `======MISSING======`;
+    replyObj.attachmentLink = req.body.attachmentLink || `======MISSING======`;
+    replyObj.claimDate = req.body.claimDate || `======MISSING======`;
     res.status(400).send(replyObj);
     return;
   }
@@ -106,11 +106,19 @@ router.post(`/`, async (req, res) => {
   const provider = req.body.provider;
   const inNetwork = req.body.inNetwork;
   const patientName = req.body.patientName;
-  const diagnosisIDs = req.body.diagnosisIDs.join(`|`);
+  let diagnosisIDs;
+  if (typeof(req.body.diagnosisIDs) === `string`) {
+    diagnosisIDs = [req.body.diagnosisIDs]
+  } else if (typeof(req.body.diagnosisIDs) === `object`) {
+    diagnosisIDs = req.body.diagnosisIDs.join(`|`);
+  } else {
+    replyObj.status = `diagnosisIDs type invalid.`
+    res.status(400).send(replyObj);
+  }
   const description = req.body.description;
   const currentPhase = req.body.currentPhase;
   const attachmentLink = req.body.attachmentLink;
-  const action = `1`;
+  const action = `0`;
   const claimDate = req.body.claimDate;
 
   const postStatementOptions = {
@@ -147,7 +155,7 @@ router.post(`/`, async (req, res) => {
 /* GET a specific statment from blockchain. */
 router.get(`/detail/:id`, async (req, res) => {
 
-  const getAllKeysOptions = {
+  const getSingleStatementOptions = {
     method: `POST`,
     uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
     json: true,
@@ -160,7 +168,7 @@ router.get(`/detail/:id`, async (req, res) => {
   };
 
   try {
-    let statementInfo = await rp(getAllKeysOptions);
+    let statementInfo = await rp(getSingleStatementOptions);
 
     if (statementInfo.returnCode !== `Success`) {
       res.status(500).send(statementInfo);
@@ -194,6 +202,66 @@ router.get(`/detail/:id`, async (req, res) => {
   } catch (err) {
     res.status(500).send(err);
   }
+});
+
+router.patch(`/sendclaim/:id`, async (req, res) => {
+
+  let replyObj = {};
+
+  //First, we grab the statement to be sure it exists...
+  const getAllKeysOptions = {
+    method: `POST`,
+    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    json: true,
+    body: {
+      channel: `bankoforacleorderer`,
+      chaincode: `healthclaims`,
+      method: `queryBatchRecord`,
+      args: [req.params.id]
+    }
+  };
+
+  try {
+    let statementInfo = await rp(getAllKeysOptions);
+
+    if (statementInfo.returnCode !== `Success`) {
+      res.status(500).send(statementInfo);
+      return;
+    }
+
+    statementInfo = JSON.parse(statementInfo.result);
+    statementInfo.Action = `2`;
+    statementInfo.DiagnosisID = statementInfo.DiagnosisID.join(`|`);
+    statementInfo.CurrentPhase = `Outside Review`;
+
+    const updateStatementOptions = {
+      method: `POST`,
+      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      json: true,
+      body: {
+        channel: `bankoforacleorderer`,
+        chaincode: `healthclaims`,
+        method: `updateStatement`,
+        args: [statementInfo.Id, statementInfo.Provider, statementInfo.NetworkInOut, statementInfo.PatientName, statementInfo.DiagnosisID, statementInfo.Description, statementInfo.CurrentPhase, statementInfo.AttachementLink, statementInfo.Action, statementInfo.Date, statementInfo.PayerName]
+      }
+    };
+
+    let result = await rp(updateStatementOptions);
+    if (result.returnCode !== `Success`) {
+      replyObj.status = `Error updating data on blockchain.`;
+      replyObj.error = result;
+      res.status(500).send(replyObj);
+      return;
+    }
+    replyObj.status = `Statement marked as ready for 3rd party.`;
+    replyObj.statementID = statementInfo.Id;
+    res.status(200).send(replyObj);
+  } catch (err) {
+    replyObj.status = `Error occurred in promise.`;
+    replyObj.error = err;
+    res.status(500).send(replyObj);
+  }
+
 });
 
 
