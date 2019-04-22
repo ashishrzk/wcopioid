@@ -267,4 +267,218 @@ router.patch(`/sendclaim/:id`, async (req, res) => {
 });
 
 
+router.patch(`/adddiagnosis/:id`, async (req, res) => {
+
+  let replyObj = {};
+
+  if (typeof(req.body.diagnosisID) !== 'object') {
+    replyObj.status = `The diagnosisID must be an array of diagnosis IDs.`;
+    res.status(400).send(replyObj);
+    return;
+  }
+
+  //First, we grab the statement to be sure it exists...
+  const getAllKeysOptions = {
+    method: `POST`,
+    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    json: true,
+    body: {
+      channel: `bankoforacleorderer`,
+      chaincode: `healthclaims`,
+      method: `queryBatchRecord`,
+      args: [req.params.id]
+    }
+  };
+
+  try {
+    let statementInfo = await rp(getAllKeysOptions);
+
+    if (statementInfo.returnCode !== `Success`) {
+      res.status(500).send(statementInfo);
+      return;
+    }
+
+    statementInfo = JSON.parse(statementInfo.result);
+    statementInfo.DiagnosisID = statementInfo.DiagnosisID.join(`|`);
+    req.body.diagnosisID.forEach((diagnosis) => {
+      statementInfo.DiagnosisID += `| ${diagnosis}`;
+    });
+
+    const updateStatementOptions = {
+      method: `POST`,
+      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      json: true,
+      body: {
+        channel: `bankoforacleorderer`,
+        chaincode: `healthclaims`,
+        method: `updateStatement`,
+        args: [statementInfo.Id, statementInfo.Provider, statementInfo.NetworkInOut, statementInfo.PatientName, statementInfo.DiagnosisID, statementInfo.Description, statementInfo.CurrentPhase, statementInfo.AttachementLink, statementInfo.Action, statementInfo.Date, statementInfo.PayerName]
+      }
+    };
+
+    let result = await rp(updateStatementOptions);
+    if (result.returnCode !== `Success`) {
+      replyObj.status = `Error updating data on blockchain.`;
+      replyObj.error = result;
+      res.status(500).send(replyObj);
+      return;
+    }
+    replyObj.status = `Diagnosis IDs added to statement.`;
+    replyObj.statementID = statementInfo.Id;
+    res.status(200).send(replyObj);
+  } catch (err) {
+    replyObj.status = `Error occurred in promise.`;
+    replyObj.error = err;
+    res.status(500).send(replyObj);
+  }
+
+});
+
+router.patch(`/removediagnosis/:id`, async (req, res) => {
+
+  let replyObj = {};
+
+  if (typeof(req.body.diagnosisID) !== `object`) {
+    replyObj.status = `The diagnosisID must be an array of diagnosis IDs.`;
+    res.status(400).send(replyObj);
+    return;
+  }
+
+  //First, we grab the statement to be sure it exists...
+  const getAllKeysOptions = {
+    method: `POST`,
+    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    json: true,
+    body: {
+      channel: `bankoforacleorderer`,
+      chaincode: `healthclaims`,
+      method: `queryBatchRecord`,
+      args: [req.params.id]
+    }
+  };
+
+  try {
+    let statementInfo = await rp(getAllKeysOptions);
+
+    if (statementInfo.returnCode !== `Success`) {
+      res.status(500).send(statementInfo);
+      return;
+    }
+
+    statementInfo = JSON.parse(statementInfo.result);
+    
+    req.body.diagnosisID.forEach((diagnosis) => {
+      let theIndex = statementInfo.DiagnosisID.indexOf(diagnosis);
+      statementInfo.DiagnosisID.splice(theIndex, 1);
+    });
+
+    statementInfo.DiagnosisID = statementInfo.DiagnosisID.join(`|`);
+
+    const updateStatementOptions = {
+      method: `POST`,
+      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      json: true,
+      body: {
+        channel: `bankoforacleorderer`,
+        chaincode: `healthclaims`,
+        method: `updateStatement`,
+        args: [statementInfo.Id, statementInfo.Provider, statementInfo.NetworkInOut, statementInfo.PatientName, statementInfo.DiagnosisID, statementInfo.Description, statementInfo.CurrentPhase, statementInfo.AttachementLink, statementInfo.Action, statementInfo.Date, statementInfo.PayerName]
+      }
+    };
+
+    let result = await rp(updateStatementOptions);
+    if (result.returnCode !== `Success`) {
+      replyObj.status = `Error updating data on blockchain.`;
+      replyObj.error = result;
+      res.status(500).send(replyObj);
+      return;
+    }
+    replyObj.status = `Diagnosis IDs removed from statement.`;
+    replyObj.statementID = statementInfo.Id;
+    res.status(200).send(replyObj);
+  } catch (err) {
+    replyObj.status = `Error occurred in promise.`;
+    replyObj.error = err;
+    res.status(500).send(replyObj);
+  }
+
+});
+
+
+
+router.patch(`/:id`, async (req, res) => {
+  let replyObj = {};
+
+  //First, we grab the statement to be sure it exists...
+  const getAllKeysOptions = {
+    method: `POST`,
+    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    json: true,
+    body: {
+      channel: `bankoforacleorderer`,
+      chaincode: `healthclaims`,
+      method: `queryBatchRecord`,
+      args: [req.params.id]
+    }
+  };
+
+  try {
+    let statementInfo = await rp(getAllKeysOptions);
+
+    if (statementInfo.returnCode !== `Success`) {
+      res.status(500).send(statementInfo);
+      return;
+    }
+
+    statementInfo = JSON.parse(statementInfo.result);
+
+    let provider = req.body.provider || statementInfo.Provider;
+    let networkInOut = req.body.inNetwork || statementInfo.NetworkInOut;
+    let patientName = req.body.patientName || statementInfo.PatientName;
+    let diagnosisID;
+    if (req.body.diagnosisID) {
+      diagnosisID = req.body.diagnosisID.join(`|`);
+    } else {
+      diagnosisID = statementInfo.DiagnosisID.join(`|`);
+    }
+    let description = req.body.description || statementInfo.Description;
+    let currentPhase = req.body.currentPhase || statementInfo.CurrentPhase;
+    let attachmentLink = req.body.attachmentLink || statementInfo.AttachementLink;
+    let action = req.body.action || `${statementInfo.Action}`;
+    let statementDate = req.body.statementDate || statementInfo.Date;
+    let payerName = req.body.payerName || statementInfo.PayerName;
+
+    const updateStatementOptions = {
+      method: `POST`,
+      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      json: true,
+      body: {
+        channel: `bankoforacleorderer`,
+        chaincode: `healthclaims`,
+        method: `updateStatement`,
+        args: [statementInfo.Id, provider, networkInOut, patientName, diagnosisID, description, currentPhase, attachmentLink, action, statementDate, payerName]
+      }
+    };
+
+    let result = await rp(updateStatementOptions);
+    if (result.returnCode !== `Success`) {
+      replyObj.status = `Error updating data on blockchain.`;
+      replyObj.error = result;
+      res.status(500).send(replyObj);
+      return;
+    }
+    replyObj.status = `Statement has been updated.`;
+    replyObj.statementID = statementInfo.Id;
+    res.status(200).send(replyObj);
+  } catch (err) {
+    replyObj.status = `Error occurred in promise.`;
+    replyObj.error = err;
+    res.status(500).send(replyObj);
+  }
+
+});
+
+
+
+
 module.exports = router;
