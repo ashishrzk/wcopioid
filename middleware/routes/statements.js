@@ -234,7 +234,7 @@ router.patch(`/sendclaim/:id`, async (req, res) => {
     statementInfo = JSON.parse(statementInfo.result);
     statementInfo.Action = `2`;
     statementInfo.DiagnosisID = statementInfo.DiagnosisID.join(`|`);
-    statementInfo.CurrentPhase = `Outside Review`;
+    statementInfo.CurrentPhase = `Third Party`;
 
     const updateStatementOptions = {
       method: `POST`,
