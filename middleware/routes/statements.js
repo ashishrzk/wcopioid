@@ -369,7 +369,9 @@ router.patch(`/removediagnosis/:id`, async (req, res) => {
     
     req.body.diagnosisID.forEach((diagnosis) => {
       let theIndex = statementInfo.DiagnosisID.indexOf(diagnosis);
-      statementInfo.DiagnosisID.splice(theIndex, 1);
+      if (theIndex !== -1) {
+        statementInfo.DiagnosisID.splice(theIndex, 1);
+      }
     });
 
     statementInfo.DiagnosisID = statementInfo.DiagnosisID.join(`|`);
