@@ -271,7 +271,7 @@ router.patch(`/adddiagnosis/:id`, async (req, res) => {
 
   let replyObj = {};
 
-  if (typeof(req.body.diagnosisID) !== 'object') {
+  if (typeof(req.body.diagnosisID) !== `object`) {
     replyObj.status = `The diagnosisID must be an array of diagnosis IDs.`;
     res.status(400).send(replyObj);
     return;
@@ -477,8 +477,6 @@ router.patch(`/:id`, async (req, res) => {
   }
 
 });
-
-
 
 
 module.exports = router;

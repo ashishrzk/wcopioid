@@ -116,6 +116,70 @@ router.post(`/`, async (req, res) => {
 });
 
 
+router.patch(`/:id`, async (req, res) => {
+  let replyObj = {};
+
+  //First, we grab the statement to be sure it exists...
+  const getDiagnosisOptions = {
+    method: `POST`,
+    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    json: true,
+    body: {
+      channel: `bankoforacleorderer`,
+      chaincode: `healthclaims`,
+      method: `queryBatchRecord`,
+      args: [req.params.id]
+    }
+  };
+
+  try {
+    let diagnosisInfo = await rp(getDiagnosisOptions);
+
+    if (diagnosisInfo.returnCode !== `Success`) {
+      res.status(500).send(diagnosisInfo);
+      return;
+    }
+
+    diagnosisInfo = JSON.parse(diagnosisInfo.result);
+
+    let CPTCode = req.body.CPTCode || diagnosisInfo.CPTCode;
+    let CPTName = req.body.CPTName || diagnosisInfo.CPTName;
+    let ICD9 = req.body.ICD9 || diagnosisInfo.ICD9;
+    let description = req.body.description || diagnosisInfo.Description;
+    let totalCharge = req.body.totalCharge || diagnosisInfo.TotalCharge;
+    let patientAmount = req.body.patientAmount || diagnosisInfo.PatientAmount;
+    let billedToInsurance = req.body.billedToInsurance || diagnosisInfo.BilledToInsurance;
+
+    const updateDiagnosisOptions = {
+      method: `POST`,
+      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      json: true,
+      body: {
+        channel: `bankoforacleorderer`,
+        chaincode: `healthclaims`,
+        method: `updateDiagnosis`,
+        args: [diagnosisInfo.Id, CPTCode, CPTName, ICD9, description, totalCharge, patientAmount, billedToInsurance]
+      }
+    };
+
+    let result = await rp(updateDiagnosisOptions);
+    if (result.returnCode !== `Success`) {
+      replyObj.status = `Error updating data on blockchain.`;
+      replyObj.error = result;
+      res.status(500).send(replyObj);
+      return;
+    }
+    replyObj.status = `Diagnosis has been updated.`;
+    replyObj.diagnosisID = diagnosisInfo.Id;
+    res.status(200).send(replyObj);
+  } catch (err) {
+    replyObj.status = `Error occurred in promise.`;
+    replyObj.error = err;
+    res.status(500).send(replyObj);
+  }
+
+});
+
 
 
 

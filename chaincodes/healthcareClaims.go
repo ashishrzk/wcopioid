@@ -226,7 +226,7 @@ func (t *healthCareChainCode) updateDiagnosis(stub shim.ChaincodeStubInterface, 
 		return shim.Error("This inspection does not exist: " + DiagnosisID)
 	}
 
-	diagnosis := &Diagnosis{DiagnosisID, args[1], args[2], args[3], args[4], args[5], args[6], args[7]}
+	diagnosis := &Diagnosis{args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]}
 	diagnosisJSONNasBytes, err := json.Marshal(diagnosis)
 	if err != nil {
 		return shim.Error("Error marshalling data: " + err.Error())
