@@ -621,7 +621,7 @@ func (t *healthCareChainCode) queryBatchRecord(stub shim.ChaincodeStubInterface,
 	var jsonResp string
 
 	if len(args) != 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1: ID [string]")
+		return shim.Error("Incorrect number of arguments. Expecting 1: ID, as string")
 	}
 
 	valAsbytes, err := stub.GetState(args[0])
