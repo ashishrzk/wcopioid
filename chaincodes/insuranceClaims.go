@@ -1,3 +1,6 @@
+// This is an older version of the chaincode, included in this repo for 
+// reference.
+
 package main
 
 import (

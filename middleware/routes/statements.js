@@ -49,7 +49,7 @@ router.get(`/`, async (req, res) => {
           res.status(500).send(answer);
           return;
         }
-        answer = JSON.parse(answer.result)
+        answer = JSON.parse(answer.result);
 
         let diagnosisArr = [];
         for (let j = 0; j < answer.DiagnosisID.length; j++) {
@@ -109,11 +109,11 @@ router.post(`/`, async (req, res) => {
   const patientName = req.body.patientName;
   let diagnosisIDs;
   if (typeof(req.body.diagnosisIDs) === `string`) {
-    diagnosisIDs = [req.body.diagnosisIDs]
+    diagnosisIDs = [req.body.diagnosisIDs];
   } else if (typeof(req.body.diagnosisIDs) === `object`) {
     diagnosisIDs = req.body.diagnosisIDs.join(`|`);
   } else {
-    replyObj.status = `diagnosisIDs type invalid.`
+    replyObj.status = `diagnosisIDs type invalid.`;
     res.status(400).send(replyObj);
   }
   const description = req.body.description;
