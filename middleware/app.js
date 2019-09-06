@@ -1,3 +1,6 @@
+// Super unsafe stuff just to work with the temp system. REMOVE SOON.
+process.env[`NODE_TLS_REJECT_UNAUTHORIZED`] = `0`;
+
 const createError = require(`http-errors`);
 const express = require(`express`);
 const path = require(`path`);
@@ -5,7 +8,6 @@ const cookieParser = require(`cookie-parser`);
 const logger = require(`morgan`);
 
 const indexRouter = require(`./routes/index`);
-const usersRouter = require(`./routes/users`);
 const statementsRouter = require(`./routes/statements`);
 const diagnosisRouter = require(`./routes/diagnosis`);
 
@@ -36,7 +38,6 @@ app.use((req, res, next) => {
 });
 
 app.use(`/`, indexRouter);
-app.use(`/users`, usersRouter);
 app.use(`/statements`, statementsRouter);
 app.use(`/diagnosis`, diagnosisRouter);
 

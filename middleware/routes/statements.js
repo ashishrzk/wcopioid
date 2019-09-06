@@ -3,19 +3,24 @@ var router = express.Router();
 
 const rp = require(`request-promise-native`);
 
+const authString = Buffer.from(`${process.env.RESTUSER}:${process.env.RESTPW}`).toString(`base64`);
+
 /* GET all statements from blockchain. */
 router.get(`/`, async (req, res) => {
   let replyArr = [];
 
   const getAllKeysOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `getAllRecordKeys`,
       args: []
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -28,19 +33,22 @@ router.get(`/`, async (req, res) => {
       return;
     }
 
-    allKeys = JSON.parse(allKeys.result);
+    allKeys = JSON.parse(allKeys.result.payload);
   
     for (let i = 0; i < allKeys.length; i++) {
       if (allKeys[i].Key[0] === `S`) {
         const getRecord = {
           method: `POST`,
-          uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+          uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
           json: true,
           body: {
-            channel: `bankoforacleorderer`,
+            channel: `claims`,
             chaincode: `healthclaims`,
             method: `queryBatchRecord`,
             args: [allKeys[i].Key]
+          },
+          headers: {
+            Authorization : `Basic ${authString}`
           }
         };
         let answer = await rp(getRecord);
@@ -49,19 +57,22 @@ router.get(`/`, async (req, res) => {
           res.status(500).send(answer);
           return;
         }
-        answer = JSON.parse(answer.result);
+        answer = JSON.parse(answer.result.payload);
 
         let diagnosisArr = [];
         for (let j = 0; j < answer.DiagnosisID.length; j++) {
           const getDiagnosis = {
             method: `POST`,
-            uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+            uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
             json: true,
             body: {
-              channel: `bankoforacleorderer`,
+              channel: `claims`,
               chaincode: `healthclaims`,
               method: `queryBatchRecord`,
               args: [answer.DiagnosisID[j]]
+            },
+            headers: {
+              Authorization : `Basic ${authString}`
             }
           };
           let answer2 = await rp(getDiagnosis);
@@ -70,7 +81,7 @@ router.get(`/`, async (req, res) => {
             res.status(500).send(answer2);
             return;
           }
-          diagnosisArr.push(JSON.parse(answer2.result));
+          diagnosisArr.push(JSON.parse(answer2.result.payload));
         }
         answer.diagnosisArr = diagnosisArr;
         replyArr.push(answer);
@@ -125,13 +136,16 @@ router.post(`/`, async (req, res) => {
 
   const postStatementOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/invocation`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `initStatement`,
       args: [statementID, provider, inNetwork, patientName, diagnosisIDs, description, currentPhase, attachmentLink, action, claimDate, payerName]
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -159,13 +173,16 @@ router.get(`/detail/:id`, async (req, res) => {
 
   const getSingleStatementOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `queryBatchRecord`,
       args: [req.params.id]
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -177,18 +194,21 @@ router.get(`/detail/:id`, async (req, res) => {
       return;
     }
 
-    statementInfo = JSON.parse(statementInfo.result);
+    statementInfo = JSON.parse(statementInfo.result.payload);
     let diagnosisArr = [];
     for (let i = 0; i < statementInfo.DiagnosisID.length; i++) {
       const getDiagnosis = {
         method: `POST`,
-        uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+        uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
         json: true,
         body: {
-          channel: `bankoforacleorderer`,
+          channel: `claims`,
           chaincode: `healthclaims`,
           method: `queryBatchRecord`,
           args: [statementInfo.DiagnosisID[i]]
+        },
+        headers: {
+          Authorization : `Basic ${authString}`
         }
       };
       let answer = await rp(getDiagnosis);
@@ -196,7 +216,7 @@ router.get(`/detail/:id`, async (req, res) => {
         res.status(500).send(answer);
         return;
       }
-      diagnosisArr.push(JSON.parse(answer.result));
+      diagnosisArr.push(JSON.parse(answer.result.payload));
     }
 
     statementInfo.DiagnosisID = diagnosisArr;
@@ -213,13 +233,16 @@ router.patch(`/sendclaim/:id`, async (req, res) => {
   //First, we grab the statement to be sure it exists...
   const getAllKeysOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `queryBatchRecord`,
       args: [req.params.id]
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -231,20 +254,23 @@ router.patch(`/sendclaim/:id`, async (req, res) => {
       return;
     }
 
-    statementInfo = JSON.parse(statementInfo.result);
+    statementInfo = JSON.parse(statementInfo.result.payload);
     statementInfo.Action = `2`;
     statementInfo.DiagnosisID = statementInfo.DiagnosisID.join(`|`);
     statementInfo.CurrentPhase = `Third Party`;
 
     const updateStatementOptions = {
       method: `POST`,
-      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/invocation`,
       json: true,
       body: {
-        channel: `bankoforacleorderer`,
+        channel: `claims`,
         chaincode: `healthclaims`,
         method: `updateStatement`,
         args: [statementInfo.Id, statementInfo.Provider, statementInfo.NetworkInOut, statementInfo.PatientName, statementInfo.DiagnosisID, statementInfo.Description, statementInfo.CurrentPhase, statementInfo.AttachementLink, statementInfo.Action, statementInfo.Date, statementInfo.PayerName]
+      },
+      headers: {
+        Authorization : `Basic ${authString}`
       }
     };
 
@@ -280,13 +306,16 @@ router.patch(`/adddiagnosis/:id`, async (req, res) => {
   //First, we grab the statement to be sure it exists...
   const getAllKeysOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `queryBatchRecord`,
       args: [req.params.id]
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -298,7 +327,7 @@ router.patch(`/adddiagnosis/:id`, async (req, res) => {
       return;
     }
 
-    statementInfo = JSON.parse(statementInfo.result);
+    statementInfo = JSON.parse(statementInfo.result.payload);
     statementInfo.DiagnosisID = statementInfo.DiagnosisID.join(`|`);
     req.body.diagnosisID.forEach((diagnosis) => {
       statementInfo.DiagnosisID += `| ${diagnosis}`;
@@ -306,13 +335,16 @@ router.patch(`/adddiagnosis/:id`, async (req, res) => {
 
     const updateStatementOptions = {
       method: `POST`,
-      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/invocation`,
       json: true,
       body: {
-        channel: `bankoforacleorderer`,
+        channel: `claims`,
         chaincode: `healthclaims`,
         method: `updateStatement`,
         args: [statementInfo.Id, statementInfo.Provider, statementInfo.NetworkInOut, statementInfo.PatientName, statementInfo.DiagnosisID, statementInfo.Description, statementInfo.CurrentPhase, statementInfo.AttachementLink, statementInfo.Action, statementInfo.Date, statementInfo.PayerName]
+      },
+      headers: {
+        Authorization : `Basic ${authString}`
       }
     };
 
@@ -347,13 +379,16 @@ router.patch(`/removediagnosis/:id`, async (req, res) => {
   //First, we grab the statement to be sure it exists...
   const getAllKeysOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
       channel: `bankoforacleorderer`,
       chaincode: `healthclaims`,
       method: `queryBatchRecord`,
       args: [req.params.id]
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -365,7 +400,7 @@ router.patch(`/removediagnosis/:id`, async (req, res) => {
       return;
     }
 
-    statementInfo = JSON.parse(statementInfo.result);
+    statementInfo = JSON.parse(statementInfo.result.payload);
     
     req.body.diagnosisID.forEach((diagnosis) => {
       let theIndex = statementInfo.DiagnosisID.indexOf(diagnosis);
@@ -378,13 +413,16 @@ router.patch(`/removediagnosis/:id`, async (req, res) => {
 
     const updateStatementOptions = {
       method: `POST`,
-      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/invocation`,
       json: true,
       body: {
         channel: `bankoforacleorderer`,
         chaincode: `healthclaims`,
         method: `updateStatement`,
         args: [statementInfo.Id, statementInfo.Provider, statementInfo.NetworkInOut, statementInfo.PatientName, statementInfo.DiagnosisID, statementInfo.Description, statementInfo.CurrentPhase, statementInfo.AttachementLink, statementInfo.Action, statementInfo.Date, statementInfo.PayerName]
+      },
+      headers: {
+        Authorization : `Basic ${authString}`
       }
     };
 
@@ -414,13 +452,16 @@ router.patch(`/:id`, async (req, res) => {
   //First, we grab the statement to be sure it exists...
   const getAllKeysOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
       channel: `bankoforacleorderer`,
       chaincode: `healthclaims`,
       method: `queryBatchRecord`,
       args: [req.params.id]
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -432,7 +473,7 @@ router.patch(`/:id`, async (req, res) => {
       return;
     }
 
-    statementInfo = JSON.parse(statementInfo.result);
+    statementInfo = JSON.parse(statementInfo.result.payload);
 
     let provider = req.body.provider || statementInfo.Provider;
     let networkInOut = req.body.inNetwork || statementInfo.NetworkInOut;
@@ -452,13 +493,16 @@ router.patch(`/:id`, async (req, res) => {
 
     const updateStatementOptions = {
       method: `POST`,
-      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/invocation`,
       json: true,
       body: {
         channel: `bankoforacleorderer`,
         chaincode: `healthclaims`,
         method: `updateStatement`,
         args: [statementInfo.Id, provider, networkInOut, patientName, diagnosisID, description, currentPhase, attachmentLink, action, statementDate, payerName]
+      },
+      headers: {
+        Authorization : `Basic ${authString}`
       }
     };
 

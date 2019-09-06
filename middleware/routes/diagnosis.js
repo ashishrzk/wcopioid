@@ -3,19 +3,24 @@ var router = express.Router();
 
 const rp = require(`request-promise-native`);
 
+const authString = Buffer.from(`${process.env.RESTUSER}:${process.env.RESTPW}`).toString(`base64`);
+
 /* GET all statements from blockchain. */
 router.get(`/`, async (req, res) => {
   let replyArr = [];
 
   const getAllKeysOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `getAllRecordKeys`,
       args: []
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -27,19 +32,22 @@ router.get(`/`, async (req, res) => {
       return;
     }
 
-    allKeys = JSON.parse(allKeys.result);
+    allKeys = JSON.parse(allKeys.result.payload); // <- Make this a filter
   
     for (let i = 0; i < allKeys.length; i++) {
       if (allKeys[i].Key[0] === `D`) {
         const getRecord = {
           method: `POST`,
-          uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+          uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
           json: true,
           body: {
-            channel: `bankoforacleorderer`,
+            channel: `claims`,
             chaincode: `healthclaims`,
             method: `queryBatchRecord`,
             args: [allKeys[i].Key]
+          },
+          headers: {
+            Authorization : `Basic ${authString}`
           }
         };
         let answer = await rp(getRecord);
@@ -47,7 +55,7 @@ router.get(`/`, async (req, res) => {
           res.status(500).send(answer);
           return;
         }
-        replyArr.push(JSON.parse(answer.result));
+        replyArr.push(JSON.parse(answer.result.payload));
       }
     }
     res.send(replyArr);
@@ -87,13 +95,16 @@ router.post(`/`, async (req, res) => {
 
   const postDiagnosisOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/invocation`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `initStatement`,
       args: [diagnosisID, CPTCode, CPTName, ICD9, description, totalCharge, patientAmount, billedToInsurance]
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -122,13 +133,16 @@ router.patch(`/:id`, async (req, res) => {
   //First, we grab the statement to be sure it exists...
   const getDiagnosisOptions = {
     method: `POST`,
-    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
       channel: `bankoforacleorderer`,
       chaincode: `healthclaims`,
       method: `queryBatchRecord`,
       args: [req.params.id]
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
     }
   };
 
@@ -140,7 +154,7 @@ router.patch(`/:id`, async (req, res) => {
       return;
     }
 
-    diagnosisInfo = JSON.parse(diagnosisInfo.result);
+    diagnosisInfo = JSON.parse(diagnosisInfo.result.payload);
 
     let CPTCode = req.body.CPTCode || diagnosisInfo.CPTCode;
     let CPTName = req.body.CPTName || diagnosisInfo.CPTName;
@@ -152,13 +166,16 @@ router.patch(`/:id`, async (req, res) => {
 
     const updateDiagnosisOptions = {
       method: `POST`,
-      uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/invocation`,
+      uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/invocation`,
       json: true,
       body: {
-        channel: `bankoforacleorderer`,
+        channel: `claims`,
         chaincode: `healthclaims`,
         method: `updateDiagnosis`,
         args: [diagnosisInfo.Id, CPTCode, CPTName, ICD9, description, totalCharge, patientAmount, billedToInsurance]
+      },
+      headers: {
+        Authorization : `Basic ${authString}`
       }
     };
 
