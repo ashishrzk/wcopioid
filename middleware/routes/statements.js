@@ -120,7 +120,7 @@ router.post(`/`, async (req, res) => {
   const patientName = req.body.patientName;
   let diagnosisIDs;
   if (typeof(req.body.diagnosisIDs) === `string`) {
-    diagnosisIDs = [req.body.diagnosisIDs];
+    diagnosisIDs = req.body.diagnosisIDs;
   } else if (typeof(req.body.diagnosisIDs) === `object`) {
     diagnosisIDs = req.body.diagnosisIDs.join(`|`);
   } else {
@@ -225,6 +225,97 @@ router.get(`/detail/:id`, async (req, res) => {
     res.status(500).send(err);
   }
 });
+
+/* GET a specific statment from blockchain. */
+router.get(`/history/:id`, async (req, res) => {
+
+  const getStatementHistoryOptions = {
+    method: `POST`,
+    uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
+//    uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+    json: true,
+    body: {
+      channel: `claims`,
+//      channel: `bankoforacleorderer`,
+      chaincode: `healthclaims`,
+      method: `queryStatementHistory`,
+      args: [req.params.id]
+    },
+    headers: {
+      Authorization : `Basic ${authString}`
+    }
+  };
+
+  try {
+    let statementInfo = await rp(getStatementHistoryOptions);
+
+    if (!statementInfo.returnCode || statementInfo.returnCode !== `Success`) {
+      res.status(500).send(`Error getting the individual statement history\n${statementInfo}`);
+      return;
+    }
+
+    statementInfo = JSON.parse(statementInfo.result.payload);
+//    statementInfo = JSON.parse(statementInfo.result);
+    let diagnosisObj = {};
+
+    statementInfo.forEach((statement) => {
+      statement.Value.DiagnosisID.forEach((diagnosis) => {
+        diagnosis = diagnosis.trim();
+        if (diagnosisObj.hasOwnProperty(diagnosis)) {
+          diagnosisObj[diagnosis].push(statement.Timestamp);
+        } else {
+          diagnosisObj[diagnosis] = [statement.Timestamp];
+        }
+      });
+    });
+
+    let diagnosisArr = Object.keys(diagnosisObj);
+    let diagnosisDetailArr = [];
+    for (let i = 0; i < diagnosisArr.length; i++) {
+      const getDiagnosis = {
+        method: `POST`,
+        uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
+//        uri: `http://132.145.136.106:3100/bcsgw/rest/v1/transaction/query`,
+        json: true,
+        body: {
+          channel: `claims`,
+//          channel: `bankoforacleorderer`,
+          chaincode: `healthclaims`,
+          method: `queryDiagnosisHistory`,
+          args: [diagnosisArr[i]]
+        },
+        headers: {
+          Authorization : `Basic ${authString}`
+        }
+      };
+      let answer = await rp(getDiagnosis);
+      if (!answer.returnCode || answer.returnCode !== `Success`) {
+        res.status(500).send(`Error getting the diagnosis history for ${diagnosisArr[i]} -\n${answer}`);
+        return;
+      }
+      diagnosisDetailArr.push(JSON.parse(answer.result.payload));
+//      diagnosisDetailArr.push(JSON.parse(answer.result));
+    }
+    diagnosisDetailArr.forEach((diagnosis) => {
+      diagnosisObj[diagnosis[0].Value.Id] = diagnosis;
+    });
+
+    statementInfo.forEach((statement) => {
+      for (let i=0; i<statement.Value.DiagnosisID.length; i++) {
+        let diagnosis = statement.Value.DiagnosisID[i].trim();
+        statement.Value.DiagnosisID[i] = diagnosisObj[diagnosis];
+      }
+    });
+
+    res.send(statementInfo);
+
+  } catch (err) {
+    res.status(500).send(`Catching error with the try block.\n ${err}`);
+  }
+});
+
+
+
 
 router.patch(`/sendclaim/:id`, async (req, res) => {
 

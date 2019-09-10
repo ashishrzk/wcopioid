@@ -100,7 +100,7 @@ router.post(`/`, async (req, res) => {
     body: {
       channel: `claims`,
       chaincode: `healthclaims`,
-      method: `initStatement`,
+      method: `initDiagnosis`,
       args: [diagnosisID, CPTCode, CPTName, ICD9, description, totalCharge, patientAmount, billedToInsurance]
     },
     headers: {
