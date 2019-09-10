@@ -341,6 +341,9 @@ router.patch(`/sendclaim/:id`, async (req, res) => {
     let statementInfo = await rp(getAllKeysOptions);
 
     if (statementInfo.returnCode !== `Success`) {
+      console.log('statementInfo');
+      console.log(statementInfo);
+      console.log('=======');
       res.status(500).send(statementInfo);
       return;
     }
@@ -378,6 +381,7 @@ router.patch(`/sendclaim/:id`, async (req, res) => {
   } catch (err) {
     replyObj.status = `Error occurred in promise.`;
     replyObj.error = err;
+    console.log(replyObj);
     res.status(500).send(replyObj);
   }
 
@@ -473,7 +477,7 @@ router.patch(`/removediagnosis/:id`, async (req, res) => {
     uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `queryBatchRecord`,
       args: [req.params.id]
@@ -507,7 +511,7 @@ router.patch(`/removediagnosis/:id`, async (req, res) => {
       uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/invocation`,
       json: true,
       body: {
-        channel: `bankoforacleorderer`,
+        channel: `claims`,
         chaincode: `healthclaims`,
         method: `updateStatement`,
         args: [statementInfo.Id, statementInfo.Provider, statementInfo.NetworkInOut, statementInfo.PatientName, statementInfo.DiagnosisID, statementInfo.Description, statementInfo.CurrentPhase, statementInfo.AttachementLink, statementInfo.Action, statementInfo.Date, statementInfo.PayerName]
@@ -546,7 +550,7 @@ router.patch(`/:id`, async (req, res) => {
     uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `queryBatchRecord`,
       args: [req.params.id]
@@ -560,6 +564,9 @@ router.patch(`/:id`, async (req, res) => {
     let statementInfo = await rp(getAllKeysOptions);
 
     if (statementInfo.returnCode !== `Success`) {
+      console.log('statementInfo');
+      console.log(statementInfo);
+      console.log('=======');
       res.status(500).send(statementInfo);
       return;
     }
@@ -587,7 +594,7 @@ router.patch(`/:id`, async (req, res) => {
       uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/invocation`,
       json: true,
       body: {
-        channel: `bankoforacleorderer`,
+        channel: `claims`,
         chaincode: `healthclaims`,
         method: `updateStatement`,
         args: [statementInfo.Id, provider, networkInOut, patientName, diagnosisID, description, currentPhase, attachmentLink, action, statementDate, payerName]
@@ -610,6 +617,9 @@ router.patch(`/:id`, async (req, res) => {
   } catch (err) {
     replyObj.status = `Error occurred in promise.`;
     replyObj.error = err;
+    console.log('replyObj');
+    console.log(replyObj);
+    console.log('=======');
     res.status(500).send(replyObj);
   }
 

@@ -136,7 +136,7 @@ router.patch(`/:id`, async (req, res) => {
     uri: `https://bchost.oracle.com:3118/restproxy1/bcsgw/rest/v1/transaction/query`,
     json: true,
     body: {
-      channel: `bankoforacleorderer`,
+      channel: `claims`,
       chaincode: `healthclaims`,
       method: `queryBatchRecord`,
       args: [req.params.id]
