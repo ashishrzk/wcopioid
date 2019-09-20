@@ -4,15 +4,16 @@
       <label>Patient Claims: Brief Summary</label>
     </div>
     <div class="row third-row">
-      <div class="col-11 border" v-for="claim in this.claims" v-bind:key="claim">
-        <v-card @click="clickMethod(claim)">
-          <table>
+      <div style="width: 80%; padding-bottom: 20px" v-for="claim in this.claims" v-bind:key="claim">
+        <div @click="clickMethod(claim)" class="border">
+          <table style="width: 100%">
             <thead>
             <tr>
-              <th scope="col" style="width: 500px">Claim Details</th>
-              <th scope="col" class="tbody-font bground" style="width: 150px">Nature</th>
-              <th scope="col" class="tbody-font bground" style="width: 150px">Part of Body</th>
-              <th scope="col" class="tbody-font bground" style="width: 150px">Flagged</th>
+              <th scope="col" style="width: 40%">Claim Details</th>
+              <th scope="col" class="tbody-font bground" style="width: 15%">Date of Injury</th>
+              <th scope="col" class="tbody-font bground" style="width: 15%">Nature</th>
+              <th scope="col" class="tbody-font bground" style="width: 15%">Part of Body</th>
+              <th scope="col" class="tbody-font bground" style="width: 15%">Flagged</th>
             </tr>
             </thead>
             <tbody>
@@ -21,26 +22,27 @@
                   <label>{{claim.claim}} {{claim.CLAIM_NUMBER}}</label>
                   <ul class="detail-style">
                     <li><b>Employer:</b> {{claim.EMPLOYER}}</li>
-                    <li><b>Date of Injury:</b> {{claim.EVENTDATE}}</li>
+                    <li><b>Gender:</b> {{claim.GENDER}}</li>
                     <li><b>Location:</b> {{claim.STATE}}</li>
                   </ul>
                 </th>
                 <td class="bground">
-                <tr><td>{{claim.NATURETITLE}}</td></tr>
+                {{claim.EVENTDATE}}
                 </td>
                 <td class="bground">
-                <tr><td>{{claim.PART_OF_BODY_TITLE}}</td></tr>
+                {{claim.NATURETITLE}}
                 </td>
                 <td class="bground">
-                  <button v-if="claim.DOSAGE_BASE_LINE_FLAG || claim.TOTAL_RISK_FACTOR=='High Risk' || claim.TOTAL_RISK_FACTOR=='Moderate Risk'" type="button" class="btn btn-danger" v-on:click="clickMethod(statement.Id)">Yes</button>
+                {{claim.PART_OF_BODY_TITLE}}
+                </td>
+                <td class="bground">
+                  <button title="View Details" v-if="claim.DOSAGE_BASE_LINE_FLAG || claim.TOTAL_RISK_FACTOR=='High Risk' || claim.TOTAL_RISK_FACTOR=='Moderate Risk'" type="button" class="btn btn-danger" v-on:click="clickMethod(statement.Id)">Yes</button>
                   <button v-else type="button" class="btn btn-success" v-on:click="clickMethod(statement.Id)">No</button>
                 </td>
               </tr>
             </tbody>
           </table>
-          <td class="bground">
-          </td>
-        </v-card>
+        </div>
       </div>
     </div>
   </div>
@@ -97,6 +99,7 @@ export default {
   padding-bottom: 2%;
   padding-left: 11%;
   padding-top: 2%;
+  padding-right: 11%;
   background: rgb(255, 255, 255);
   font-size: 16px;
   text-align: left;
@@ -123,7 +126,7 @@ table.table.table-condensed {
 }
 .detail-style {
   font-weight: lighter;
-  padding-left: 5%;
+  padding-left: 8%;
 }
 .bground {
   background-color: rgba(0, 0, 0, 0.11);
