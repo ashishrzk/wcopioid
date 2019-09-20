@@ -16,7 +16,7 @@
               <label>Claims</label>
               </div>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-3" v-on:click="providers()">
           <div class="col-md-12 hvr-bounce-to-top">
               <img src="../../assets/icons/provider.png" style="width: 100px; height: 100px;"/><br/>
               <label>Providers</label>
@@ -54,6 +54,9 @@ export default {
     },
     claims: function () {
       this.$router.push({name: 'Claims'})
+    },
+    providers: function (){
+      this.$router.push({name: 'Providers'})
     }
   }
 }

@@ -3,76 +3,44 @@
     <div class="row first-row">
       <label>Patient Claims: Brief Summary</label>
     </div>
-    <div class="row second-row">
-      <ul style="min-width: 100px;">
-        <li>Find the patients claims and the amount charged for services.</li>
-        <li>Calculate the amount paid by patient for in network services.</li>
-        <li>Send the claims in batch for out of network services.</li>
-        <li>Generate report for individual patients.</li>
-      </ul>
-    </div>
     <div class="row third-row">
-      <div class="col-11" v-for="statement in statements" v-bind:key="statement">
-        <table v-if="statement.CurrentPhase !== 'Outside Review'" class="table table-condensed">
-          <thead>
+      <div class="col-11 border" v-for="claim in this.claims" v-bind:key="claim">
+        <v-card @click="clickMethod(claim)">
+          <table>
+            <thead>
             <tr>
-              <th scope="col" style="width: 45%">Patient Details</th>
-              <th scope="col" class="tbody-font bground">Network</th>
-              <th scope="col" class="tbody-font bground">Current Phase</th>
-              <th scope="col" class="tbody-font bground">Total Amount Billed</th>
-              <th scope="col" class="tbody-font bground">Patient Amount</th>
-              <th scope="col" class="tbody-font bground">Billed To Insurance</th>
-              <th scope="col" class="tbody-font bground">Status</th>
+              <th scope="col" style="width: 500px">Claim Details</th>
+              <th scope="col" class="tbody-font bground" style="width: 150px">Nature</th>
+              <th scope="col" class="tbody-font bground" style="width: 150px">Part of Body</th>
+              <th scope="col" class="tbody-font bground" style="width: 150px">Flagged</th>
             </tr>
-          </thead>
-          <tbody>
-            <tr class="tbody-font">
-              <th scope="row">
-                <label>{{statement.Id}} {{statement.PatientName}}</label>
-                <ul class="detail-style">
-                  <li>
-                    <b>Provider:</b>
-                    {{statement.Provider}}
-                  </li>
-                  <li>
-                    <b>Description:</b>
-                    {{statement.Description}}
-                  </li>
-                  <li>
-                    <b>Attachment:</b>
-                    <a>{{statement.AttachementLink}}</a>
-                  </li>
-                </ul>
-              </th>
-              <td class="bground">
-                <tr><td>{{statement.NetworkInOut}}</td></tr>
+            </thead>
+            <tbody>
+              <tr class="tbody-font">
+                <th scope="row">
+                  <label>{{claim.claim}} {{claim.CLAIM_NUMBER}}</label>
+                  <ul class="detail-style">
+                    <li><b>Employer:</b> {{claim.EMPLOYER}}</li>
+                    <li><b>Date of Injury:</b> {{claim.EVENTDATE}}</li>
+                    <li><b>Location:</b> {{claim.STATE}}</li>
+                  </ul>
+                </th>
+                <td class="bground">
+                <tr><td>{{claim.NATURETITLE}}</td></tr>
                 </td>
-              <td class="bground">
-                <tr><td>{{statement.CurrentPhase}}</td></tr>
+                <td class="bground">
+                <tr><td>{{claim.PART_OF_BODY_TITLE}}</td></tr>
                 </td>
-              <td class="bground">
-                  <tr v-for="diag in statement.diagnosisArr" v-bind:key="diag">
-                    <td>{{diag.TotalCharge}}</td>
-                  </tr>
-              </td>
-              <td class="bground">
-                  <tr v-for="diag in statement.diagnosisArr" v-bind:key="diag">
-                    <td>{{diag.PatientAmount}}</td>
-                  </tr>
-              </td>
-              <td class="bground">
-                  <tr v-for="diag in statement.diagnosisArr" v-bind:key="diag">
-                    <td>{{diag.BilledToInsurance}}</td>
-                  </tr>
-              </td>
-              <td class="bground">
-                <button v-if="statement.CurrentPhase === 'Ready to Claim'" type="button" class="btn btn-danger" v-on:click="sendToThirdParty(statement.Id)">Send Claim</button>
-                <button v-else-if="statement.CurrentPhase === 'Third Party'" type="button" class="btn btn-warning">Processing</button>
-                <button v-else type="button" class="btn btn-success">Success</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <td class="bground">
+                  <button v-if="claim.DOSAGE_BASE_LINE_FLAG || claim.TOTAL_RISK_FACTOR=='High Risk' || claim.TOTAL_RISK_FACTOR=='Moderate Risk'" type="button" class="btn btn-danger" v-on:click="clickMethod(statement.Id)">Yes</button>
+                  <button v-else type="button" class="btn btn-success" v-on:click="clickMethod(statement.Id)">No</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <td class="bground">
+          </td>
+        </v-card>
       </div>
     </div>
   </div>
@@ -84,22 +52,26 @@ export default {
   name: 'Claims',
   data () {
     return {
-      statements: [],
-      statementID: null
+      claims: [],
+      claimID: null,
     }
   },
   mounted () {
-    axios.get('http://129.213.162.51:2999/statements').then(response => {
-      this.statements = response.data
+    axios.get('https://cors-anywhere.herokuapp.com/http://129.213.147.141:3050/riskandclaims').then(response => {
+      this.claims = response.data
+      console.log(this.claims);
     })
   },
   methods: {
-    sendToThirdParty (statementID) {
-      axios.patch('http://129.213.162.51:2999/statements/sendclaim/' + statementID).then(response => {
-        console.log('Sent ' + statementID + ' for third party processing successfully.')
-        window.location.reload()
-      })
-    }
+    clickMethod (claim) {
+       //add code that you wish to happen on click
+       //console.log("clicked is" + claim.CLAIM_NUMBER)
+       //this.$router.push({name: 'Claim', params: { claim } }) //oG pass in all data
+       let claim_number = claim.CLAIM_NUMBER
+       //this.$router.push({name: 'claims', params: { claim_number } })
+       this.$router.push({ path: `/claims/${claim_number}`}) //works
+       //this.$router.push({ path: '/claims/', query: { id: 'private' } })
+   }
   }
 }
 </script>
@@ -124,6 +96,7 @@ export default {
 .third-row {
   padding-bottom: 2%;
   padding-left: 11%;
+  padding-top: 2%;
   background: rgb(255, 255, 255);
   font-size: 16px;
   text-align: left;
